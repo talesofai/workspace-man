@@ -1,0 +1,26 @@
+{
+  "name": "@netaverses/workspace-manager",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "ws": "./bin/ws.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node bin/ws.js"
+  },
+  "dependencies": {
+    "execa": "^9.5.2",
+    "simple-git": "^3.27.0",
+    "commander": "^12.1.0",
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.7",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

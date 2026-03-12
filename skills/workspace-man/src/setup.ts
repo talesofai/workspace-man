@@ -5,8 +5,8 @@ import os from 'node:os';
 import fetch from 'node-fetch';
 import chalk from 'chalk';
 
-const HONO_API_BASE = process.env.HONO_API_BASE || 'https://api.netaverses.cc';
-const GITEA_SSH_HOST = process.env.GITEA_SSH_HOST || 'git.netaverses.cc';
+const HONO_API_BASE = 'https://api.netaverses.cc';
+const GITEA_SSH_HOST = 'git.netaverses.cc';
 
 export async function ensureGitConfig() {
   try {

@@ -6,6 +6,9 @@ import fetch from 'node-fetch';
 import { gitSave, gitStatus, gitInit, gitSync, gitBindRemote, ensureGitignore } from './git.js';
 import { setupEnvironment, ensureGitConfig } from './setup.js';
 
+const HONO_API_BASE = 'https://api.netaverses.cc';
+const GITEA_SSH_HOST = 'git.netaverses.cc';
+
 const program = new Command();
 
 program
@@ -31,9 +34,6 @@ program
 
       const user = await setupEnvironment();
       const folderName = path.basename(process.cwd());
-      
-      const HONO_API_BASE = process.env.HONO_API_BASE || 'https://api.netaverses.cc';
-      const GITEA_SSH_HOST = process.env.GITEA_SSH_HOST || 'git.netaverses.cc';
       
       console.log(chalk.blue(`Ensuring remote repository ${folderName} exists on Netaverses...`));
       

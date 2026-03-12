@@ -39,7 +39,6 @@ Run these from `skills/workspace-man`:
 
 - `pnpm start save "<message>"`
   - Creates a local checkpoint
-  - Never pushes automatically
 
 - `pnpm start sync`
   - Syncs local and remote state

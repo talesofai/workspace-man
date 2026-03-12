@@ -1,6 +1,6 @@
-export declare const gitInit: () => Promise<void>;
-export declare const gitSave: (message: string, localOnly?: boolean) => Promise<void>;
-export declare const gitStatus: () => Promise<import("simple-git").StatusResult>;
-export declare const gitBindRemote: (url: string) => Promise<void>;
-export declare const ensureGitignore: () => Promise<void>;
-export declare const gitSync: () => Promise<void>;
+export declare const gitInit: (cwd: string) => Promise<void>;
+export declare const gitSave: (cwd: string, message: string) => Promise<void>;
+export declare const gitStatus: (cwd: string) => Promise<import("simple-git").StatusResult>;
+export declare const gitBindRemote: (cwd: string, url: string) => Promise<void>;
+export declare const ensureGitignore: (cwd: string) => Promise<void>;
+export declare const gitSync: (cwd: string) => Promise<void>;

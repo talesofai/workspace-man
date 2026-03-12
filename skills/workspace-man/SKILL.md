@@ -27,14 +27,15 @@ Use this skill to save a user's workspace state and optionally sync it with Neta
 - Do **not** mention Git, commits, SSH keys, remotes, or ignore rules unless the user explicitly asks.
 - Prefer local safety first: saving locally is the default; cloud sync is optional.
 - If setup is missing, handle it for the user instead of asking them to initialize manually.
-- Always target the user's actual workspace folder, not the skill installation directory.
-- Always pass the target folder explicitly with `--workspace <path>`.
-- Never run this skill without `--workspace`.
-- If the correct workspace path is unclear, ask the user to confirm the target folder before running any command.
+- Always run the commands in the installed skill directory.
+- Always pass the user's project folder explicitly with `--workspace <path>`; never call this skill without `--workspace`.
+- If the workspace path is unclear, ask the user to confirm it before running any command.
+
+## First-run setup
+
+- If the installed skill directory does not have dependencies yet (for example, `node_modules` is missing or `pnpm start` fails with install-related errors), run `pnpm install` in the installed skill directory once.
 
 ## Commands
-
-Run these from `skills/workspace-man`:
 
 - `pnpm start init --workspace <path>`
   - Prepares the target workspace folder for this skill

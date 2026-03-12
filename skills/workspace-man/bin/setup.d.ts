@@ -1,2 +1,2 @@
-export declare function ensureGitConfig(): Promise<void>;
-export declare function setupEnvironment(): Promise<any>;
+export declare function ensureGitConfig(cwd: string): Promise<void>;
+export declare function setupEnvironment(cwd: string): Promise<any>;

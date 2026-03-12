@@ -1,9 +1,20 @@
+#!/usr/bin/env node
 import { Command } from 'commander';
 import chalk from 'chalk';
 import path from 'node:path';
+import fs from 'node:fs';
 import fetch from 'node-fetch';
 import { gitSave, gitInit, gitSync, gitBindRemote, ensureGitignore } from './git.js';
 import { setupEnvironment, ensureGitConfig } from './setup.js';
+const HONO_API_BASE = 'https://api.netaverses.cc';
+const GITEA_SSH_HOST = 'git.netaverses.cc';
+const resolveWorkspaceDir = (workspace) => {
+    const workspaceDir = path.resolve(workspace);
+    if (!fs.existsSync(workspaceDir)) {
+        throw new Error(`Workspace directory does not exist: ${workspaceDir}`);
+    }
+    return workspaceDir;
+};
 const program = new Command();
 program
     .name('ws')
@@ -11,27 +22,22 @@ program
     .version('0.1.0');
 program
     .command('init')
-    .description('Initialize a new workspace and bind it to Gitea')
-    .option('--local', 'Initialize locally without connecting to Netaverses')
+    .description('Initialize a new workspace (local-first) and optionally connect to Netaverses if configured')
+    .requiredOption('-w, --workspace <path>', 'Path to the user workspace directory')
     .action(async (options) => {
     try {
-        await gitInit();
-        await ensureGitConfig();
-        await ensureGitignore();
-        if (options.local) {
-            console.log(chalk.green('✔ Local workspace initialized!'));
-            return;
-        }
+        const workspaceDir = resolveWorkspaceDir(options.workspace);
+        await gitInit(workspaceDir);
+        await ensureGitConfig(workspaceDir);
+        await ensureGitignore(workspaceDir);
         const token = process.env.NETA_TOKEN;
         if (!token) {
-            console.log(chalk.yellow('! NETA_TOKEN not found. Workspace initialized locally. Run sync later to connect.'));
+            console.log(chalk.green(`✔ Local workspace initialized: ${workspaceDir}`));
+            console.log(chalk.yellow('ℹ To enable cloud backup later, set NETA_TOKEN and run `ws sync` when ready.'));
             return;
         }
-        const user = await setupEnvironment();
-        const folderName = path.basename(process.cwd());
-        // Auto-create or bind remote repo
-        const HONO_API_BASE = process.env.HONO_API_BASE || 'https://api.netaverses.cc';
-        const GITEA_SSH_HOST = process.env.GITEA_SSH_HOST || 'git.netaverses.cc';
+        const user = await setupEnvironment(workspaceDir);
+        const folderName = path.basename(workspaceDir);
         console.log(chalk.blue(`Ensuring remote repository ${folderName} exists on Netaverses...`));
         const res = await fetch(`${HONO_API_BASE}/api/v1/user/repos`, {
             method: 'POST',
@@ -43,13 +49,13 @@ program
         });
         if (res.ok || res.status === 409) {
             const sshUrl = `git@${GITEA_SSH_HOST}:${user.username || user.nick_name}/${folderName}.git`;
-            await gitBindRemote(sshUrl);
+            await gitBindRemote(workspaceDir, sshUrl);
             console.log(chalk.green(`✔ Remote bound: ${sshUrl}`));
+            console.log(chalk.green(`✔ Workspace initialized and connected to Netaverses: ${workspaceDir}`));
         }
         else {
-            console.warn(chalk.yellow('Could not ensure remote repository existence. Initialized locally.'));
+            console.warn(chalk.yellow('Could not ensure remote repository existence. Workspace is initialized locally and can be synced later.'));
         }
-        console.log(chalk.green('✔ Workspace initialized and connected to Netaverses!'));
     }
     catch (e) {
         console.error(chalk.red(`Error: ${e.message}`));
@@ -57,16 +63,15 @@ program
 });
 program
     .command('save')
-    .description('Save current progress with a message')
+    .description('Save current progress with a message (local checkpoint only)')
     .argument('<message>', 'Description of changes')
-    .option('--no-push', 'Only commit locally, do not attempt to push')
+    .requiredOption('-w, --workspace <path>', 'Path to the user workspace directory')
     .action(async (message, options) => {
     try {
-        await gitSave(message, !options.push);
-        console.log(chalk.green('✔ Progress saved locally!'));
-        if (options.push) {
-            console.log(chalk.green('✔ Changes pushed to remote!'));
-        }
+        const workspaceDir = resolveWorkspaceDir(options.workspace);
+        await gitSave(workspaceDir, message);
+        console.log(chalk.green(`✔ Progress saved locally: ${workspaceDir}`));
+        console.log(chalk.yellow('ℹ To update the cloud copy (if configured), run `ws sync` or `pnpm start sync` in this workspace.'));
     }
     catch (e) {
         console.error(chalk.red(`Error: ${e.message}`));
@@ -74,11 +79,13 @@ program
 });
 program
     .command('sync')
-    .description('Sync with remote Gitea')
-    .action(async () => {
+    .description('Sync local changes with the remote workspace (if a remote is configured)')
+    .requiredOption('-w, --workspace <path>', 'Path to the user workspace directory')
+    .action(async (options) => {
     try {
-        await gitSync();
-        console.log(chalk.green('✔ Workspace synced with Gitea!'));
+        const workspaceDir = resolveWorkspaceDir(options.workspace);
+        await gitSync(workspaceDir);
+        console.log(chalk.green(`✔ Workspace synced with remote: ${workspaceDir}`));
     }
     catch (e) {
         console.error(chalk.red(`Error: ${e.message}`));

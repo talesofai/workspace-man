@@ -33,3 +33,11 @@ Local save flows work without extra configuration.
 For cloud sync, the skill uses:
 
 - `NETA_TOKEN`
+
+## Command targeting
+
+This skill must always be run with an explicit target workspace path:
+
+- `pnpm start init --workspace <path>`
+- `pnpm start save "<message>" --workspace <path>`
+- `pnpm start sync --workspace <path>`

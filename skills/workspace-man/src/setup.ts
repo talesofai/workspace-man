@@ -8,10 +8,10 @@ import chalk from 'chalk';
 const HONO_API_BASE = 'https://api.netaverses.cc';
 const GITEA_SSH_HOST = 'git.netaverses.cc';
 
-export async function ensureGitConfig() {
+export async function ensureGitConfig(cwd: string) {
   try {
-    const { stdout: name } = await execa('git', ['config', 'user.name']);
-    const { stdout: email } = await execa('git', ['config', 'user.email']);
+    const { stdout: name } = await execa('git', ['config', 'user.name'], { cwd });
+    const { stdout: email } = await execa('git', ['config', 'user.email'], { cwd });
     if (name && email) return;
   } catch (e) {
     // Config missing, continue to set defaults
@@ -22,23 +22,22 @@ export async function ensureGitConfig() {
   const fallbackEmail = `${fallbackName}@netaverses.cc`;
 
   try {
-    await execa('git', ['config', 'user.name', fallbackName]);
-    await execa('git', ['config', 'user.email', fallbackEmail]);
+    await execa('git', ['config', 'user.name', fallbackName], { cwd });
+    await execa('git', ['config', 'user.email', fallbackEmail], { cwd });
   } catch (e) {
     console.warn(chalk.yellow('Failed to set local git config.'));
   }
 }
 
-export async function setupEnvironment() {
+export async function setupEnvironment(cwd: string) {
   const token = process.env.NETA_TOKEN;
   if (!token) {
     throw new Error('Missing NETA_TOKEN environment variable. Please authenticate with Netaverses first.');
   }
 
-  // 1. Check/Generate SSH Key
   const sshDir = path.join(os.homedir(), '.ssh');
   const keyPath = path.join(sshDir, 'id_ed25519_neta');
-  
+
   if (!fs.existsSync(keyPath)) {
     console.log(chalk.blue('Generating new Netaverses SSH key...'));
     if (!fs.existsSync(sshDir)) fs.mkdirSync(sshDir, { recursive: true });
@@ -47,21 +46,18 @@ export async function setupEnvironment() {
 
   const pubKey = fs.readFileSync(`${keyPath}.pub`, 'utf-8').trim();
 
-  // 2. Sync SSH Key to Gitea via Hono BFF
   console.log(chalk.blue('Syncing SSH key via Netaverses API...'));
   const user = await fetchAuthUser(token);
   await uploadSshKey(token, pubKey, `neta-ws-${os.hostname()}`);
 
-  // 3. Configure git config with remote info
   console.log(chalk.blue('Configuring git with Netaverses profile...'));
-  
+
   const userName = user.nick_name || user.username || 'neta-user';
   const fakeEmail = `${userName}@netaverses.cc`;
-  
-  await execa('git', ['config', 'user.name', userName]);
-  await execa('git', ['config', 'user.email', fakeEmail]);
-  
-  // Ensure SSH uses the specific key for this domain
+
+  await execa('git', ['config', 'user.name', userName], { cwd });
+  await execa('git', ['config', 'user.email', fakeEmail], { cwd });
+
   setupSshConfig(keyPath);
 
   return user;
@@ -76,8 +72,6 @@ async function fetchAuthUser(token: string) {
 }
 
 async function uploadSshKey(token: string, key: string, title: string) {
-  // Use the Hono API to proxy the SSH key upload to Gitea
-  // This ensures the user is validated by Hono first
   const res = await fetch(`${HONO_API_BASE}/api/v1/user/keys`, {
     method: 'POST',
     headers: {
@@ -86,7 +80,7 @@ async function uploadSshKey(token: string, key: string, title: string) {
     },
     body: JSON.stringify({ key, title })
   });
-  
+
   if (res.status === 422 || res.status === 409) {
     console.log(chalk.yellow('SSH key already registered.'));
   } else if (!res.ok) {

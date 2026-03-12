@@ -1,27 +1,30 @@
-import { simpleGit, SimpleGit } from 'simple-git';
-import { execa } from 'execa';
+import { simpleGit } from 'simple-git';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const git: SimpleGit = simpleGit();
+const getGit = (cwd: string) => simpleGit({ baseDir: cwd });
 
-export const gitInit = async () => {
+export const gitInit = async (cwd: string) => {
+  const git = getGit(cwd);
   const isRepo = await git.checkIsRepo();
   if (!isRepo) {
     await git.init();
   }
 };
 
-export const gitSave = async (message: string) => {
+export const gitSave = async (cwd: string, message: string) => {
+  const git = getGit(cwd);
   await git.add('.');
   await git.commit(message);
 };
 
-export const gitStatus = async () => {
+export const gitStatus = async (cwd: string) => {
+  const git = getGit(cwd);
   return await git.status();
 };
 
-export const gitBindRemote = async (url: string) => {
+export const gitBindRemote = async (cwd: string, url: string) => {
+  const git = getGit(cwd);
   const remotes = await git.getRemotes();
   if (remotes.find(r => r.name === 'origin')) {
     await git.remote(['set-url', 'origin', url]);
@@ -30,8 +33,8 @@ export const gitBindRemote = async (url: string) => {
   }
 };
 
-export const ensureGitignore = async () => {
-  const gitignorePath = path.join(process.cwd(), '.gitignore');
+export const ensureGitignore = async (cwd: string) => {
+  const gitignorePath = path.join(cwd, '.gitignore');
   const commonIgnores = [
     '# Dependency directories',
     'node_modules/',
@@ -86,7 +89,7 @@ export const ensureGitignore = async () => {
   if (!fs.existsSync(gitignorePath)) {
     fs.writeFileSync(gitignorePath, commonIgnores.join('\n'));
   } else {
-    let content = fs.readFileSync(gitignorePath, 'utf-8');
+    const content = fs.readFileSync(gitignorePath, 'utf-8');
     const toAdd = commonIgnores.filter(item => item && !item.startsWith('#') && !content.includes(item));
     if (toAdd.length > 0) {
       fs.appendFileSync(gitignorePath, '\n# Added by Workspace Manager\n' + toAdd.join('\n'));
@@ -94,7 +97,8 @@ export const ensureGitignore = async () => {
   }
 };
 
-export const gitSync = async () => {
+export const gitSync = async (cwd: string) => {
+  const git = getGit(cwd);
   await git.pull('origin', 'main');
   await git.push('origin', 'main');
 };

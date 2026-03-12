@@ -33,3 +33,11 @@ Agent 应该用用户能理解的话来表达，例如：
 云同步会使用：
 
 - `NETA_TOKEN`
+
+## 命令目标路径
+
+这个 Skill 必须显式传入目标工作区路径：
+
+- `pnpm start init --workspace <path>`
+- `pnpm start save "<message>" --workspace <path>`
+- `pnpm start sync --workspace <path>`

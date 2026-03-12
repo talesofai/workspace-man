@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "ws": "./bin/ws.js"
+    "ws": "./bin/index.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "start": "node bin/ws.js"
+    "start": "node bin/index.js"
   },
   "dependencies": {
     "execa": "^9.5.2",

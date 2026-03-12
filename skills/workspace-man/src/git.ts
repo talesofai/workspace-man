@@ -12,21 +12,9 @@ export const gitInit = async () => {
   }
 };
 
-export const gitSave = async (message: string, localOnly = false) => {
+export const gitSave = async (message: string) => {
   await git.add('.');
   await git.commit(message);
-  
-  if (localOnly) return;
-
-  // Auto push to origin
-  try {
-    const remotes = await git.getRemotes();
-    if (remotes.find(r => r.name === 'origin')) {
-      await git.push('origin', 'main');
-    }
-  } catch (e) {
-    throw new Error('Could not push to origin, but commit saved locally.');
-  }
 };
 
 export const gitStatus = async () => {
@@ -47,17 +35,19 @@ export const ensureGitignore = async () => {
   const commonIgnores = [
     '# Dependency directories',
     'node_modules/',
-    'jspm_packages/',
     '',
     '# Build outputs',
     'dist/',
     'build/',
     'out/',
+    'coverage/',
+    '.turbo/',
     '.svelte-kit/',
     '.next/',
     '.nuxt/',
     '',
     '# Logs',
+    'logs/',
     '*.log',
     'npm-debug.log*',
     'yarn-debug.log*',
@@ -72,7 +62,7 @@ export const ensureGitignore = async () => {
     '.DS_Store',
     'Thumbs.db',
     '',
-    '# Editor files',
+    '# Editor settings',
     '.vscode/',
     '.idea/',
     '*.suo',
@@ -81,13 +71,16 @@ export const ensureGitignore = async () => {
     '*.sln',
     '*.swp',
     '',
-    '# Netaverses Specific',
+    '# Hosting / deployment outputs',
     '.output',
     '.vercel',
     '.netlify',
     '.wrangler',
-    'vite.config.js.timestamp-*',
-    'vite.config.ts.timestamp-*'
+    '',
+    '# Tooling cache',
+    '.eslintcache',
+    '.stylelintcache',
+    '.tsbuildinfo'
   ];
 
   if (!fs.existsSync(gitignorePath)) {

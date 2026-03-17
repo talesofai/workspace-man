@@ -4,8 +4,8 @@ import path from 'node:path';
 import os from 'node:os';
 import fetch from 'node-fetch';
 import chalk from 'chalk';
+import { NETAVERSES_API_BASE } from './config.js';
 
-const HONO_API_BASE = 'https://api.netaverses.cc';
 const GITEA_SSH_HOST = 'git.netaverses.cc';
 
 export async function ensureGitConfig(cwd: string) {
@@ -64,7 +64,7 @@ export async function setupEnvironment(cwd: string) {
 }
 
 async function fetchAuthUser(token: string) {
-  const res = await fetch(`${HONO_API_BASE}/v1/user/`, {
+  const res = await fetch(`${NETAVERSES_API_BASE}/v1/user/`, {
     headers: { 'x-token': token }
   });
   if (!res.ok) throw new Error(`Failed to fetch user profile: ${res.statusText}`);
@@ -72,7 +72,7 @@ async function fetchAuthUser(token: string) {
 }
 
 async function uploadSshKey(token: string, key: string, title: string) {
-  const res = await fetch(`${HONO_API_BASE}/api/v1/user/keys`, {
+  const res = await fetch(`${NETAVERSES_API_BASE}/api/v1/user/keys`, {
     method: 'POST',
     headers: {
       'x-token': token,

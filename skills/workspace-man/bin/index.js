@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import fetch from 'node-fetch';
 import { gitSave, gitInit, gitSync, gitBindRemote, ensureGitignore } from './git.js';
 import { setupEnvironment, ensureGitConfig } from './setup.js';
-const HONO_API_BASE = 'https://api.netaverses.cc';
+import { shareWorkspace } from './share.js';
+import { NETAVERSES_API_BASE } from './config.js';
 const GITEA_SSH_HOST = 'git.netaverses.cc';
 const resolveWorkspaceDir = (workspace) => {
     const workspaceDir = path.resolve(workspace);
@@ -39,7 +40,7 @@ program
         const user = await setupEnvironment(workspaceDir);
         const folderName = path.basename(workspaceDir);
         console.log(chalk.blue(`Ensuring remote repository ${folderName} exists on Netaverses...`));
-        const res = await fetch(`${HONO_API_BASE}/api/v1/user/repos`, {
+        const res = await fetch(`${NETAVERSES_API_BASE}/api/v1/user/repos`, {
             method: 'POST',
             headers: {
                 'x-token': token,
@@ -86,6 +87,19 @@ program
         const workspaceDir = resolveWorkspaceDir(options.workspace);
         await gitSync(workspaceDir);
         console.log(chalk.green(`✔ Workspace synced with remote: ${workspaceDir}`));
+    }
+    catch (e) {
+        console.error(chalk.red(`Error: ${e.message}`));
+    }
+});
+program
+    .command('share')
+    .description('Share a snapshot of the workspace anonymously to Netaverses')
+    .requiredOption('-w, --workspace <path>', 'Path to the user workspace directory')
+    .action(async (options) => {
+    try {
+        const workspaceDir = resolveWorkspaceDir(options.workspace);
+        await shareWorkspace(workspaceDir);
     }
     catch (e) {
         console.error(chalk.red(`Error: ${e.message}`));
